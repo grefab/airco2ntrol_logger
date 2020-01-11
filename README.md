@@ -12,3 +12,14 @@ ACTION=="remove", GOTO="co2mini_end"
 SUBSYSTEMS=="usb", KERNEL=="hidraw*", ATTRS{idVendor}=="04d9", ATTRS{idProduct}=="a052", GROUP="plugdev", MODE="0660", SYMLINK+="co2mini%n", GOTO="co2mini_end"
 LABEL="co2mini_end"
 ```
+
+## RethinkDB Preparation
+```
+r.db('rethinkdb').table('users').insert({id: 'sensor', password: 'xxx'})
+r.db('homeautomation').table('airquality').grant('sensor', {read: true, write: true, config: false})
+```
+
+## Statring
+```
+while true; do ./airco2ntrol_logger.py livingroom /dev/co2mini0 && break; done
+```
