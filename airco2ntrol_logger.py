@@ -82,10 +82,14 @@ if __name__ == "__main__":
     values = {}
     notified = False
 
+    client = sys.argv[1]
     last_co2 = 0
     last_tmp = 0
 
-    conn = r.connect()
+    conn = r.connect(host='rethinkdb.example.com',
+                     port=28015,
+                     user='sensor',
+                     password='xxx')
     while True:
         data = list(ord(e) for e in fp.read(8))
         decrypted = decrypt(key, data)
@@ -107,9 +111,9 @@ if __name__ == "__main__":
 
                 print "CO2: %4i TMP: %3.1f" % (co2, tmp)
                 if (co2 != last_co2) or (tmp != last_tmp):
-                    print "storing in db"
+                    print "storing in db:", client, co2, tmp
                     r.db('co2monitor').table('history').insert({'timestamp': r.now(),
-                                                                'client': sys.argv[1],
+                                                                'client': client,
                                                                 'co2': co2,
                                                                 'tmp': tmp}).run(conn)
 
