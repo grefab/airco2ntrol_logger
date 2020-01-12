@@ -2,18 +2,18 @@ package lib
 
 import (
 	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"google.golang.org/grpc"
 	"log"
 	"net"
 	pb "storage/pb"
-	"time"
 )
 
 type server struct {
 }
 
-func RunServer(ip net.IP, port int, async bool) {
+func RunServer(ip net.IP, port int) {
 	lis, err := net.ListenTCP("tcp", &net.TCPAddr{IP: ip, Port: port})
 	if err != nil {
 		panic(err)
@@ -22,17 +22,9 @@ func RunServer(ip net.IP, port int, async bool) {
 	s := grpc.NewServer()
 	pb.RegisterStorageServer(s, &server{})
 
-	run := func() {
-		err := s.Serve(lis)
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	if async {
-		go run()
-	} else {
-		run()
+	err = s.Serve(lis)
+	if err != nil {
+		panic(err)
 	}
 }
 
@@ -44,8 +36,12 @@ func (s *server) GetSince(oldest *timestamp.Timestamp, stream pb.Storage_GetSinc
 		"homeautomation")
 	defer conn.Close()
 
+	ts, err := ptypes.Timestamp(oldest)
+	if err != nil {
+		panic(err)
+	}
 	FollowHistory(conn,
-		time.Hour,
+		ts,
 		func(doc pb.AirQuality) bool {
 			log.Printf("%v\n", proto.MarshalTextString(&doc))
 			err := stream.Send(&doc)

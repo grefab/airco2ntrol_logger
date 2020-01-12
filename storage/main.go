@@ -16,7 +16,7 @@ func main() {
 	ip, port := parseEndpoint(endpoint)
 
 	log.Printf("running server on %v:%v", ip, port)
-	lib.RunServer(ip, port, false)
+	lib.RunServer(ip, port)
 }
 
 func parseEndpoint(endpoint *string) (net.IP, int) {

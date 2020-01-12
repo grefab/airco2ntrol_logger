@@ -35,12 +35,12 @@ func EstablishConnection(
 }
 
 // Query all documents of the requested past and keep following new ones.
-func FollowHistory(session *r.Session, sinceHowLong time.Duration, handleDoc func(doc airco2ntrol.AirQuality) bool) {
-	expectedDocuments := sinceHowLong / (5 * time.Second) // we expect a data point every ~5s
+func FollowHistory(session *r.Session, sinceWhen time.Time, handleDoc func(doc airco2ntrol.AirQuality) bool) {
+	expectedDocuments := time.Since(sinceWhen) / (5 * time.Second) // we expect a data point every ~5s
 	cursor, err := r.Table("airquality").
 		OrderBy(r.OrderByOpts{Index: r.Desc("timestamp")}).
 		Limit(expectedDocuments * 2). // we fetch twice as many documents as expected to be sure
-		Filter(func(row r.Term) r.Term { return row.Field("timestamp").Gt(time.Now().Add(-sinceHowLong)) }).
+		Filter(func(row r.Term) r.Term { return row.Field("timestamp").Gt(sinceWhen) }).
 		Changes(r.ChangesOpts{IncludeInitial: true}).
 		Run(session)
 	if err != nil {
