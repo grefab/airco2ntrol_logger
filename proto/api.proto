@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package airco2ntrol;
+
+import "google/protobuf/timestamp.proto";
+
+service Storage {
+    rpc GetSince (google.protobuf.Timestamp) returns (stream AirQuality);
+}
+
+message AirQuality {
+    google.protobuf.Timestamp timestamp = 1;
+    float tmp = 2;
+    float co2 = 3;
+}
