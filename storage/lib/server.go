@@ -32,7 +32,7 @@ func (s *server) GetSince(oldest *timestamp.Timestamp, stream pb.Storage_GetSinc
 	conn := EstablishConnection(
 		"rethinkdb.isotronic.de",
 		"sensor",
-		"S3nsor#D4ta",
+		"xxx",
 		"homeautomation")
 	defer conn.Close()
 
