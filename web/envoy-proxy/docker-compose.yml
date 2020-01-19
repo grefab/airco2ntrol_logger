@@ -1,0 +1,10 @@
+version: '3'
+
+services:
+  envoy:
+    build: .
+    ports:
+      - "15801:15801"
+    environment:
+      - STORAGE_HOST=storage
+      - STORAGE_PORT=15800
