@@ -1,7 +1,6 @@
 package lib
 
 import (
-	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"google.golang.org/grpc"
@@ -28,6 +27,7 @@ func RunServer(ip net.IP, port int) {
 }
 
 func (s *server) GetSince(oldest *timestamp.Timestamp, stream pb.Storage_GetSinceServer) error {
+	log.Printf("GetSince(%v)", oldest)
 	conn := EstablishConnection(
 		"rethinkdb.isotronic.de",
 		"sensor",
@@ -43,7 +43,6 @@ func (s *server) GetSince(oldest *timestamp.Timestamp, stream pb.Storage_GetSinc
 	err = FollowHistory(conn,
 		ts,
 		func(doc pb.AirQuality) (bool, error) {
-			log.Printf("%v\n", proto.MarshalTextString(&doc))
 			err := stream.Send(&doc)
 			if err != nil {
 				return false, err
@@ -51,6 +50,7 @@ func (s *server) GetSince(oldest *timestamp.Timestamp, stream pb.Storage_GetSinc
 			return true, err
 		})
 	if err != nil {
+		log.Printf("GetSince(): %v", err)
 		return err
 	}
 
