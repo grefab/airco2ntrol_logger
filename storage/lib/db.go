@@ -5,6 +5,7 @@ import (
 	"github.com/golang/protobuf/ptypes/timestamp"
 	r "gopkg.in/rethinkdb/rethinkdb-go.v6"
 	"gopkg.in/rethinkdb/rethinkdb-go.v6/encoding"
+	"log"
 	airco2ntrol "storage/pb"
 	"time"
 )
@@ -35,11 +36,11 @@ func EstablishConnection(
 }
 
 // Query all documents of the requested past and keep following new ones.
-func FollowHistory(session *r.Session, sinceWhen time.Time, handleDoc func(doc airco2ntrol.AirQuality) bool) {
-	expectedDocuments := time.Since(sinceWhen) / (5 * time.Second) // we expect a data point every ~5s
+func FollowHistory(session *r.Session, sinceWhen time.Time, handleDoc func(doc airco2ntrol.AirQuality) (bool, error)) error {
+	expectedDocuments := 10
 	cursor, err := r.Table("airquality").
 		OrderBy(r.OrderByOpts{Index: r.Desc("timestamp")}).
-		Limit(expectedDocuments * 2). // we fetch twice as many documents as expected to be sure
+		Limit(expectedDocuments).
 		Filter(func(row r.Term) r.Term { return row.Field("timestamp").Gt(sinceWhen) }).
 		Changes(r.ChangesOpts{IncludeInitial: true}).
 		Run(session)
@@ -48,19 +49,25 @@ func FollowHistory(session *r.Session, sinceWhen time.Time, handleDoc func(doc a
 	}
 	var rawDocument map[string]interface{}
 	for cursor.Next(&rawDocument) {
-		// log.Printf("raw: %v\n", rawDocument)
+		log.Printf("raw: %v\n", rawDocument)
 		doc := Document{}
 		err := encoding.Decode(&doc, rawDocument["new_val"]) // since we work on a change feed we need key "nev_val"
 		if err != nil {
-			panic(err)
+			return err
 		}
-		if !handleDoc(makeProto(doc)) {
+		proceed, err := handleDoc(makeProto(doc))
+		if err != nil {
+			return err
+		}
+		if !proceed {
 			break
 		}
 	}
 	if cursor.Err() != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }
 
 func makeProto(doc Document) airco2ntrol.AirQuality {

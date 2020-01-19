@@ -37,18 +37,22 @@ func (s *server) GetSince(oldest *timestamp.Timestamp, stream pb.Storage_GetSinc
 
 	ts, err := ptypes.Timestamp(oldest)
 	if err != nil {
-		panic(err)
+		return err
 	}
-	FollowHistory(conn,
+
+	err = FollowHistory(conn,
 		ts,
-		func(doc pb.AirQuality) bool {
+		func(doc pb.AirQuality) (bool, error) {
 			log.Printf("%v\n", proto.MarshalTextString(&doc))
 			err := stream.Send(&doc)
 			if err != nil {
-				panic(err)
+				return false, err
 			}
-			return true
+			return true, err
 		})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

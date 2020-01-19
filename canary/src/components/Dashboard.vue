@@ -26,7 +26,6 @@
         },
         mounted() {
             this.setupHistory();
-
             let sinceWhen = new Timestamp();
             let call = this.storage.getSince(sinceWhen, {});
             call.on('data', function (airquality) {
@@ -34,12 +33,15 @@
             });
             call.on('end', function () {
                 // The server has finished sending
+                console.log("END");
             });
             call.on('error', function (e) {
                 // An error has occurred and the stream has been closed.
+                console.log("ERROR", e);
             });
             call.on('status', function (status) {
                 // process status
+                console.log("STATUS");
             });
         },
         methods: {
