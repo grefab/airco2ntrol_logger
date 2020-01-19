@@ -14,14 +14,13 @@ type server struct {
 }
 
 func RunServer(ip net.IP, port int) {
+	s := grpc.NewServer()
+	pb.RegisterStorageServer(s, &server{})
+
 	lis, err := net.ListenTCP("tcp", &net.TCPAddr{IP: ip, Port: port})
 	if err != nil {
 		panic(err)
 	}
-
-	s := grpc.NewServer()
-	pb.RegisterStorageServer(s, &server{})
-
 	err = s.Serve(lis)
 	if err != nil {
 		panic(err)
@@ -32,7 +31,7 @@ func (s *server) GetSince(oldest *timestamp.Timestamp, stream pb.Storage_GetSinc
 	conn := EstablishConnection(
 		"rethinkdb.isotronic.de",
 		"sensor",
-		"xxx",
+		"S3nsor#D4ta",
 		"homeautomation")
 	defer conn.Close()
 

@@ -20,7 +20,7 @@
                 historyHandler: new Vue(),
             }
         },
-        components: {},
+        components: {VueC3},
         created() {
             this.storage = new StorageClient(getStorageServiceEndpoint(), null, null);
         },
@@ -84,7 +84,7 @@
                     }
                 };
 
-                this.rejectionHistoryHandler.$emit('init', options);
+                this.historyHandler.$emit('init', options);
             }
             ,
             updateRejectionHistory: function (newValues) {
@@ -96,7 +96,7 @@
                     reject.push(newValues[i].rejectionRate.toFixed(2));
                 }
 
-                this.rejectionHistoryHandler.$emit('dispatch', (chart) => chart.load({
+                this.historyHandler.$emit('dispatch', (chart) => chart.load({
                     columns: [categories, reject]
                 }));
             }
