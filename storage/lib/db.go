@@ -70,6 +70,35 @@ func FollowHistory(session *r.Session, sinceWhen time.Time, handleDoc func(doc a
 	return nil
 }
 
+func FetchBatch(session *r.Session, from time.Time, to time.Time) (*airco2ntrol.Batch, error) {
+	cursor, err := r.Table("airquality").
+		Between(from, to, r.BetweenOpts{Index: "timestamp"}).
+		OrderBy(r.OrderByOpts{Index: "timestamp"}).
+		Run(session)
+	if err != nil {
+		panic(err)
+	}
+
+	var result airco2ntrol.Batch
+	var rawDocument map[string]interface{}
+	for cursor.Next(&rawDocument) {
+		log.Printf("raw: %v\n", rawDocument)
+		doc := Document{}
+		err := encoding.Decode(&doc, rawDocument["new_val"]) // since we work on a change feed we need key "nev_val"
+		if err != nil {
+			return nil, err
+		}
+
+		d := makeProto(doc)
+		result.Items = append(result.Items, &d)
+	}
+	if cursor.Err() != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
 func makeProto(doc Document) airco2ntrol.AirQuality {
 	pb := airco2ntrol.AirQuality{
 		Timestamp: func() *timestamp.Timestamp {

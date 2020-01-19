@@ -5,11 +5,21 @@ package airco2ntrol;
 import "google/protobuf/timestamp.proto";
 
 service Storage {
+    rpc GetBatch (TimeFrame) returns (Batch);
     rpc GetSince (google.protobuf.Timestamp) returns (stream AirQuality);
+}
+
+message TimeFrame {
+    google.protobuf.Timestamp from = 1;
+    google.protobuf.Timestamp to = 2;
 }
 
 message AirQuality {
     google.protobuf.Timestamp timestamp = 1;
     float tmp = 2;
     float co2 = 3;
+}
+
+message Batch {
+    repeated AirQuality items = 1;
 }

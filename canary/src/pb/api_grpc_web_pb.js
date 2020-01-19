@@ -71,6 +71,86 @@ proto.airco2ntrol.StoragePromiseClient =
 /**
  * @const
  * @type {!grpc.web.MethodDescriptor<
+ *   !proto.airco2ntrol.TimeFrame,
+ *   !proto.airco2ntrol.Batch>}
+ */
+const methodDescriptor_Storage_GetBatch = new grpc.web.MethodDescriptor(
+  '/airco2ntrol.Storage/GetBatch',
+  grpc.web.MethodType.UNARY,
+  proto.airco2ntrol.TimeFrame,
+  proto.airco2ntrol.Batch,
+  /**
+   * @param {!proto.airco2ntrol.TimeFrame} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.airco2ntrol.Batch.deserializeBinary
+);
+
+
+/**
+ * @const
+ * @type {!grpc.web.AbstractClientBase.MethodInfo<
+ *   !proto.airco2ntrol.TimeFrame,
+ *   !proto.airco2ntrol.Batch>}
+ */
+const methodInfo_Storage_GetBatch = new grpc.web.AbstractClientBase.MethodInfo(
+  proto.airco2ntrol.Batch,
+  /**
+   * @param {!proto.airco2ntrol.TimeFrame} request
+   * @return {!Uint8Array}
+   */
+  function(request) {
+    return request.serializeBinary();
+  },
+  proto.airco2ntrol.Batch.deserializeBinary
+);
+
+
+/**
+ * @param {!proto.airco2ntrol.TimeFrame} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @param {function(?grpc.web.Error, ?proto.airco2ntrol.Batch)}
+ *     callback The callback function(error, response)
+ * @return {!grpc.web.ClientReadableStream<!proto.airco2ntrol.Batch>|undefined}
+ *     The XHR Node Readable Stream
+ */
+proto.airco2ntrol.StorageClient.prototype.getBatch =
+    function(request, metadata, callback) {
+  return this.client_.rpcCall(this.hostname_ +
+      '/airco2ntrol.Storage/GetBatch',
+      request,
+      metadata || {},
+      methodDescriptor_Storage_GetBatch,
+      callback);
+};
+
+
+/**
+ * @param {!proto.airco2ntrol.TimeFrame} request The
+ *     request proto
+ * @param {?Object<string, string>} metadata User defined
+ *     call metadata
+ * @return {!Promise<!proto.airco2ntrol.Batch>}
+ *     A native promise that resolves to the response
+ */
+proto.airco2ntrol.StoragePromiseClient.prototype.getBatch =
+    function(request, metadata) {
+  return this.client_.unaryCall(this.hostname_ +
+      '/airco2ntrol.Storage/GetBatch',
+      request,
+      metadata || {},
+      methodDescriptor_Storage_GetBatch);
+};
+
+
+/**
+ * @const
+ * @type {!grpc.web.MethodDescriptor<
  *   !proto.google.protobuf.Timestamp,
  *   !proto.airco2ntrol.AirQuality>}
  */

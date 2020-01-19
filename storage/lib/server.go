@@ -1,12 +1,14 @@
 package lib
 
 import (
+	"context"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"google.golang.org/grpc"
 	"log"
 	"net"
 	pb "storage/pb"
+	"time"
 )
 
 type server struct {
@@ -24,6 +26,35 @@ func RunServer(ip net.IP, port int) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func conv(protoTimestamp *timestamp.Timestamp) time.Time {
+	ts, err := ptypes.Timestamp(protoTimestamp)
+	if err != nil {
+		panic(err)
+	}
+	return ts
+}
+
+func (s *server) GetBatch(ctx context.Context, timeFrame *pb.TimeFrame) (*pb.Batch, error) {
+	log.Printf("GetBatch(%v)", timeFrame)
+	conn := EstablishConnection(
+		"rethinkdb.isotronic.de",
+		"sensor",
+		"S3nsor#D4ta",
+		"homeautomation")
+	defer conn.Close()
+
+	from := conv(timeFrame.From)
+	to := conv(timeFrame.From)
+
+	batch, err := FetchBatch(conn, from, to)
+	if err != nil {
+		log.Printf("GetBatch(): %v", err)
+		return nil, err
+	}
+
+	return batch, nil
 }
 
 func (s *server) GetSince(oldest *timestamp.Timestamp, stream pb.Storage_GetSinceServer) error {
