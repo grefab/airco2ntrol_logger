@@ -1,112 +1,122 @@
 <template>
     <div>
-        <vue-c3 :handler="historyHandler" style="height: 160px;"/>
+        <plotlygraph :propData="plotInfo" divId="plot" style="height: 600px"/>
     </div>
 </template>
 
 <script>
-    import Vue from 'vue'
-    import VueC3 from 'vue-c3'
     import 'c3/c3.min.css'
     import moment from 'moment'
+    import plotlygraph from './PlotlyGraph'
     import {StorageClient} from '../pb/api_grpc_web_pb'
     import {getStorageServiceEndpoint} from "@/helper"
-    import {AirQuality, TimeFrame} from '../pb/api_pb'
+    import {TimeFrame} from '../pb/api_pb'
     import {Timestamp} from 'google-protobuf/google/protobuf/timestamp_pb'
 
     export default {
         name: 'Dashboard',
         data() {
             return {
-                historyHandler: new Vue(),
+                plotInfo: {
+                    data: [{
+                        x: [new Date(), 1, 2, 3],
+                        y: [4, 1, 2, 1],
+                        type: 'scatter'
+                    }]
+                },
             }
         },
-        components: {VueC3},
+        components: {plotlygraph},
+        methods: {},
         created() {
             this.storage = new StorageClient(getStorageServiceEndpoint(), null, null);
         },
         mounted() {
-            this.setupHistory();
+            // prepare request
             let timeFrame = new TimeFrame();
             {
                 let now = moment();
                 let nowTimestamp = new Timestamp();
                 nowTimestamp.setSeconds(now.unix());
                 nowTimestamp.setNanos(now.milliseconds() * 1000);
-                let then = now.subtract(1, 'hours');
+                let then = now.subtract(24, 'hours');
                 let thenTimestamp = new Timestamp();
                 thenTimestamp.setSeconds(then.unix());
                 thenTimestamp.setNanos(then.milliseconds() * 1000);
                 timeFrame.setFrom(thenTimestamp);
                 timeFrame.setTo(nowTimestamp);
             }
-            console.log(timeFrame);
 
+            // execute request
             this.storage.getBatch(timeFrame, {}, (err, batch) => {
-                console.log(batch.toObject());
-            });
-        },
-        methods: {
-            setupHistory: function () {
-                const options = {
-                    data: {
-                        type: 'bar',
-                        x: 'x',
-                        columns: [],
-                        labels: true
-                    },
-                    axis: {
-                        x: {
-                            type: 'category',
-                            tick: {
-                                rotate: 90,
-                                multiline: false
-                            }
-                        },
-                        y: {
-                            min: 0,
-                            max: 20,
-                            padding: {
-                                bottom: 0
+                    let dates = [];
+                    let co2s = [];
+                    let temps = [];
+                    batch.getItemsList().forEach((e) => {
+                        let ts = new Date(e.getTimestamp().getSeconds() * 1000);
+                        dates.push(ts);
+                        co2s.push(e.getCo2());
+                        temps.push(e.getTmp());
+                    });
+
+                    this.plotInfo = {
+                        data: [
+                            {
+                                x: dates,
+                                y: co2s,
+                                type: 'scatter'
                             },
-                            tick: {
-                                values: [0, 10, 25, 50, 100]
+                            {
+                                x: dates,
+                                y: temps,
+                                yaxis: 'y2',
+                                type: 'scatter'
+                            },
+                        ],
+                        layout: {
+                            title: 'livingroom air quality',
+                            xaxis: {
+                                rangeselector: {
+                                    buttons: [{
+                                        step: 'month',
+                                        stepmode: 'backward',
+                                        count: 1,
+                                        label: '1m'
+                                    }, {
+                                        step: 'month',
+                                        stepmode: 'backward',
+                                        count: 6,
+                                        label: '6m'
+                                    }, {
+                                        step: 'year',
+                                        stepmode: 'todate',
+                                        count: 1,
+                                        label: 'YTD'
+                                    }, {
+                                        step: 'year',
+                                        stepmode: 'backward',
+                                        count: 1,
+                                        label: '1y'
+                                    }, {
+                                        step: 'all',
+                                    }],
+                                    rangeslider: {}
+                                }
+                            },
+                            yaxis: {
+                                title: 'co2 ppm',
+                                fixedrange: true
+                            },
+                            yaxis2: {
+                                title: 'temp °C',
+                                overlaying: 'y',
+                                side: 'right'
                             }
                         }
-                    },
-                    grid: {
-                        y: {
-                            lines: [
-                                {value: 10},
-                                {value: 25},
-                                {value: 50}
-                            ]
-                        }
-                    },
-                    legend: {
-                        show: false
                     }
-                };
-
-                this.historyHandler.$emit('init', options);
-            }
-            ,
-            updateRejectionHistory: function (newValues) {
-                const categories = ['x'];
-                const reject = ['reject %'];
-
-                for (let i = 0; i < newValues.length; ++i) {
-                    categories.push(newValues[i].hourOfDay + "-" + (newValues[i].hourOfDay + 1) + "h");
-                    reject.push(newValues[i].rejectionRate.toFixed(2));
                 }
-
-                this.historyHandler.$emit('dispatch', (chart) => chart.load({
-                    columns: [categories, reject]
-                }));
-            }
-            ,
-        }
-        ,
+            );
+        },
         beforeDestroy() {
         }
     }
