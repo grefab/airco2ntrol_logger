@@ -42,7 +42,7 @@ func connDetails() (address,
 	database string) {
 	return "rethinkdb.isotronic.de",
 		"sensor",
-		"S3nsor#D4ta",
+		"xxx",
 		"homeautomation"
 }
 
