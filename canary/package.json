@@ -14,7 +14,8 @@
     "vue": "^2.6.11",
     "vue-c3": "^1.2.11",
     "google-protobuf": "^3.11.2",
-    "grpc-web": "^1.0.7"
+    "grpc-web": "^1.0.7",
+    "moment": "^2.24.0"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^4.1.2",

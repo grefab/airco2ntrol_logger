@@ -28,7 +28,7 @@ func RunServer(ip net.IP, port int) {
 	}
 }
 
-func conv(protoTimestamp *timestamp.Timestamp) time.Time {
+func protoTimestampToTime(protoTimestamp *timestamp.Timestamp) time.Time {
 	ts, err := ptypes.Timestamp(protoTimestamp)
 	if err != nil {
 		panic(err)
@@ -36,18 +36,23 @@ func conv(protoTimestamp *timestamp.Timestamp) time.Time {
 	return ts
 }
 
-func (s *server) GetBatch(ctx context.Context, timeFrame *pb.TimeFrame) (*pb.Batch, error) {
-	log.Printf("GetBatch(%v)", timeFrame)
-	conn := EstablishConnection(
-		"rethinkdb.isotronic.de",
+func connDetails() (address,
+	username,
+	password,
+	database string) {
+	return "rethinkdb.isotronic.de",
 		"sensor",
 		"S3nsor#D4ta",
-		"homeautomation")
+		"homeautomation"
+}
+
+func (s *server) GetBatch(ctx context.Context, timeFrame *pb.TimeFrame) (*pb.Batch, error) {
+	log.Printf("fetching batch between [%v, %v]", protoTimestampToTime(timeFrame.From), protoTimestampToTime(timeFrame.To))
+	conn := DbConnection(connDetails())
 	defer conn.Close()
 
-	from := conv(timeFrame.From)
-	to := conv(timeFrame.From)
-
+	from := protoTimestampToTime(timeFrame.From)
+	to := protoTimestampToTime(timeFrame.To)
 	batch, err := FetchBatch(conn, from, to)
 	if err != nil {
 		log.Printf("GetBatch(): %v", err)
@@ -59,11 +64,7 @@ func (s *server) GetBatch(ctx context.Context, timeFrame *pb.TimeFrame) (*pb.Bat
 
 func (s *server) GetSince(oldest *timestamp.Timestamp, stream pb.Storage_GetSinceServer) error {
 	log.Printf("GetSince(%v)", oldest)
-	conn := EstablishConnection(
-		"rethinkdb.isotronic.de",
-		"sensor",
-		"S3nsor#D4ta",
-		"homeautomation")
+	conn := DbConnection(connDetails())
 	defer conn.Close()
 
 	ts, err := ptypes.Timestamp(oldest)

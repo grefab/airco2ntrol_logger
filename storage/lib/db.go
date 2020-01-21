@@ -17,7 +17,7 @@ type Document struct {
 	Timestamp time.Time
 }
 
-func EstablishConnection(
+func DbConnection(
 	address,
 	username,
 	password,
@@ -82,7 +82,6 @@ func FetchBatch(session *r.Session, from time.Time, to time.Time) (*airco2ntrol.
 	var result airco2ntrol.Batch
 	var rawDocument map[string]interface{}
 	for cursor.Next(&rawDocument) {
-		log.Printf("raw: %v\n", rawDocument)
 		doc := Document{}
 		err := encoding.Decode(&doc, rawDocument["new_val"]) // since we work on a change feed we need key "nev_val"
 		if err != nil {
@@ -96,6 +95,7 @@ func FetchBatch(session *r.Session, from time.Time, to time.Time) (*airco2ntrol.
 		return nil, err
 	}
 
+	log.Printf("fetched %v items", len(result.Items))
 	return &result, nil
 }
 

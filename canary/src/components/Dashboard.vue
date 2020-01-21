@@ -8,9 +8,10 @@
     import Vue from 'vue'
     import VueC3 from 'vue-c3'
     import 'c3/c3.min.css'
+    import moment from 'moment'
     import {StorageClient} from '../pb/api_grpc_web_pb'
     import {getStorageServiceEndpoint} from "@/helper"
-    import {AirQuality} from '../pb/api_pb'
+    import {AirQuality, TimeFrame} from '../pb/api_pb'
     import {Timestamp} from 'google-protobuf/google/protobuf/timestamp_pb'
 
     export default {
@@ -26,22 +27,23 @@
         },
         mounted() {
             this.setupHistory();
-            let sinceWhen = new Timestamp();
-            let call = this.storage.getSince(sinceWhen, {});
-            call.on('data', function (airquality) {
-                console.log(airquality);
-            });
-            call.on('end', function () {
-                // The server has finished sending
-                console.log("END");
-            });
-            call.on('error', function (e) {
-                // An error has occurred and the stream has been closed.
-                console.log("ERROR", e);
-            });
-            call.on('status', function (status) {
-                // process status
-                console.log("STATUS");
+            let timeFrame = new TimeFrame();
+            {
+                let now = moment();
+                let nowTimestamp = new Timestamp();
+                nowTimestamp.setSeconds(now.unix());
+                nowTimestamp.setNanos(now.milliseconds() * 1000);
+                let then = now.subtract(1, 'hours');
+                let thenTimestamp = new Timestamp();
+                thenTimestamp.setSeconds(then.unix());
+                thenTimestamp.setNanos(then.milliseconds() * 1000);
+                timeFrame.setFrom(thenTimestamp);
+                timeFrame.setTo(nowTimestamp);
+            }
+            console.log(timeFrame);
+
+            this.storage.getBatch(timeFrame, {}, (err, batch) => {
+                console.log(batch.toObject());
             });
         },
         methods: {
