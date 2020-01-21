@@ -83,7 +83,7 @@ func FetchBatch(session *r.Session, from time.Time, to time.Time) (*airco2ntrol.
 	var rawDocument map[string]interface{}
 	for cursor.Next(&rawDocument) {
 		doc := Document{}
-		err := encoding.Decode(&doc, rawDocument["new_val"]) // since we work on a change feed we need key "nev_val"
+		err := encoding.Decode(&doc, rawDocument)
 		if err != nil {
 			return nil, err
 		}
